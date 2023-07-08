@@ -91,3 +91,15 @@ TEST_CASE("raw command line single path option")
   REQUIRE(arguments[0].get_type() == cppli::variant_type::string);
   REQUIRE(arguments[0].get_string() == "Relative/Path");
 }
+
+TEST_CASE("raw command line single char option")
+{
+  std::string command = "\"test.exe\" --option1 'c'";
+  cppli::raw_command_line cmd(command);
+  REQUIRE(cmd.has_option("option1"));
+  std::vector<cppli::variant_literal> arguments;
+  REQUIRE(cmd.get_option_arguments("option1", arguments));
+  REQUIRE(arguments.size() == 1);
+  REQUIRE(arguments[0].get_type() == cppli::variant_type::string);
+  REQUIRE(arguments[0].get_string() == "c");
+}

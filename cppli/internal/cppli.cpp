@@ -358,40 +358,60 @@ namespace internal
       return std::move(parameter_node);
     }
 
-    if (
-      context.accept(e_token_id::string_literal)    ||
-      context.accept(e_token_id::integer_literal)   ||
-      context.accept(e_token_id::float_literal)     ||
-      context.accept(e_token_id::character_literal) ||
-      context.accept(e_token_id::hex_literal)       ||
-      context.accept(e_token_id::binary_literal)    ||
-      context.accept(e_token_id::_true)             ||
-      context.accept(e_token_id::_false)
-    )
+    if (context.accept(e_token_id::string_literal))
     {
       std::unique_ptr<internal::parameter_node> parameter_node = std::make_unique<internal::parameter_node>();
-      parameter_node->m_name = std::string(context.get_previous_token().m_stream, context.get_previous_token().m_length);
-      switch (context.get_previous_token().m_id)
-      {
-        case e_token_id::string_literal:
-        case e_token_id::character_literal:
-        case e_token_id::identifier:
-          parameter_node->m_type = variant_type::string;
-          break;
-        case e_token_id::integer_literal:
-        case e_token_id::hex_literal:
-        case e_token_id::binary_literal:
-          parameter_node->m_type = variant_type::integer;
-          break;
-        case e_token_id::float_literal:
-          parameter_node->m_type = variant_type::floating_point;
-          break;
-        case e_token_id::_true:
-        case e_token_id::_false:
-          parameter_node->m_type = variant_type::boolean;
-          break;
-      }
-
+      parameter_node->m_name.assign(context.get_previous_token().m_stream + 1, context.get_previous_token().m_length - 2);
+      parameter_node->m_type = variant_type::string;
+      return std::move(parameter_node);
+    }
+    else if (context.accept(e_token_id::integer_literal))
+    {
+      std::unique_ptr<internal::parameter_node> parameter_node = std::make_unique<internal::parameter_node>();
+      parameter_node->m_name.assign(context.get_previous_token().m_stream, context.get_previous_token().m_length);
+      parameter_node->m_type = variant_type::integer;
+      return std::move(parameter_node);
+    }
+    if (context.accept(e_token_id::float_literal))
+    {
+      std::unique_ptr<internal::parameter_node> parameter_node = std::make_unique<internal::parameter_node>();
+      parameter_node->m_name.assign(context.get_previous_token().m_stream, context.get_previous_token().m_length);
+      parameter_node->m_type = variant_type::floating_point;
+      return std::move(parameter_node);
+    }
+    else if (context.accept(e_token_id::character_literal))
+    {
+      std::unique_ptr<internal::parameter_node> parameter_node = std::make_unique<internal::parameter_node>();
+      parameter_node->m_name.assign(context.get_previous_token().m_stream + 1, context.get_previous_token().m_length - 2);
+      parameter_node->m_type = variant_type::string;
+      return std::move(parameter_node);
+    }
+    else if (context.accept(e_token_id::hex_literal))
+    {
+      std::unique_ptr<internal::parameter_node> parameter_node = std::make_unique<internal::parameter_node>();
+      parameter_node->m_name.assign(context.get_previous_token().m_stream, context.get_previous_token().m_length);
+      parameter_node->m_type = variant_type::integer;
+      return std::move(parameter_node);
+    }
+    else if (context.accept(e_token_id::binary_literal))
+    {
+      std::unique_ptr<internal::parameter_node> parameter_node = std::make_unique<internal::parameter_node>();
+      parameter_node->m_name.assign(context.get_previous_token().m_stream, context.get_previous_token().m_length);
+      parameter_node->m_type = variant_type::integer;
+      return std::move(parameter_node);
+    }
+    else if (context.accept(e_token_id::_true))
+    {
+      std::unique_ptr<internal::parameter_node> parameter_node = std::make_unique<internal::parameter_node>();
+      parameter_node->m_name.assign(context.get_previous_token().m_stream, context.get_previous_token().m_length);
+      parameter_node->m_type = variant_type::boolean;
+      return std::move(parameter_node);
+    }
+    else if (context.accept(e_token_id::_false))
+    {
+      std::unique_ptr<internal::parameter_node> parameter_node = std::make_unique<internal::parameter_node>();
+      parameter_node->m_name.assign(context.get_previous_token().m_stream, context.get_previous_token().m_length);
+      parameter_node->m_type = variant_type::boolean;
       return std::move(parameter_node);
     }
 
