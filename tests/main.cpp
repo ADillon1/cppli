@@ -23,6 +23,15 @@ TEST_CASE("single parameter option test.")
   REQUIRE(cli.execute(command) == true);
 }*/
 
+TEST_CASE("raw command line empty")
+{
+    cppli::raw_command_line cmd1("");
+    REQUIRE(cmd1.is_empty());
+
+    cppli::raw_command_line cmd2(nullptr);
+    REQUIRE(cmd2.is_empty());
+}
+
 TEST_CASE("raw command line single boolean option true.")
 {
   std::string command = "\"test.exe\" --option1 true";
@@ -129,4 +138,16 @@ TEST_CASE("raw command line single char option")
   REQUIRE(arguments.size() == 1);
   REQUIRE(arguments[0].get_type() == cppli::variant_type::string);
   REQUIRE(arguments[0].get_string() == "c");
+}
+
+TEST_CASE("raw command line derive command from identifiers.")
+{
+  std::string command = "test.exe --option1 false";
+  cppli::raw_command_line cmd(command);
+  REQUIRE(cmd.get_command() == "test.exe");
+  std::vector<cppli::variant_literal> arguments;
+  REQUIRE(cmd.get_option_arguments("option1", arguments));
+  REQUIRE(arguments.size() == 1);
+  REQUIRE(arguments[0].get_type() == cppli::variant_type::boolean);
+  REQUIRE(arguments[0].get_bool() == false);
 }

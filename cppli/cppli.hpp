@@ -90,6 +90,8 @@ namespace internal
 
     raw_command_line(const std::string& command);
 
+    raw_command_line(const nullptr_t& null);
+
     raw_command_line& operator=(const raw_command_line& Rhs);
 
     bool is_empty() const;

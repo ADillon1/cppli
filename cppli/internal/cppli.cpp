@@ -226,6 +226,12 @@ namespace internal
     int begin = context.m_current_token;
     out_path.clear();
 
+    if (context.accept(e_token_id::string_literal))
+    {
+      out_path.assign(context.get_previous_token().m_stream + 1, context.get_previous_token().m_length - 2);
+      return true;
+    }
+
     while (!context.end_of_token_stream())
     {
       if (
@@ -264,8 +270,8 @@ namespace internal
       dfa_cpp dfa;
       internal::command_parsing_context context;
       tokenize::string(m_command_string, dfa, context.m_token_context);
-
-      if (context.accept(e_token_id::identifier) || context.accept(e_token_id::string_literal))
+      std::string command_string;
+      if (parse_path(context, command_string))
       {
         // Remove whitespace.
         context.remove_tokens(e_token_id::new_line);
@@ -273,7 +279,7 @@ namespace internal
         context.remove_tokens(e_token_id::multi_line_comment);
 
         std::unique_ptr<internal::command_node> command_node = std::make_unique<internal::command_node>();
-        command_node->m_name.assign(context.get_previous_token().m_stream, context.get_previous_token().m_length);
+        command_node->m_name = command_string;
 
         int current_token_index = context.m_current_token;
 
@@ -459,6 +465,13 @@ namespace internal
   {
     m_command_string = command;
     m_root_command = parse_command();
+  }
+
+  raw_command_line::raw_command_line(const nullptr_t& null)
+    : m_command_string()
+    , m_root_command()
+  {
+
   }
 
   raw_command_line& raw_command_line::operator=(const raw_command_line& rhs)
