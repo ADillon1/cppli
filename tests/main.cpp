@@ -41,6 +41,16 @@ TEST_CASE("raw command line with no arguments or options.")
   REQUIRE(command == command_string);
 }
 
+TEST_CASE("raw command line full path command parsing.")
+{
+  std::string command = "C:/scripts/test/program.exe -o";
+  cppli::raw_command_line cmd(command);
+  REQUIRE(!cmd.is_empty());
+  std::string command_string = cmd.get_command();
+  REQUIRE(command_string == "C:/scripts/test/program.exe");
+  REQUIRE(cmd.has_option("o"));
+}
+
 TEST_CASE("raw command line single boolean option true.")
 {
   std::string command = "\"test.exe\" --option1 true";
