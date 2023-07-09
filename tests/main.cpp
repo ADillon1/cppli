@@ -198,6 +198,35 @@ TEST_CASE("raw command line multiple options.")
   arguments.clear();
 }
 
+TEST_CASE("raw command line with options that have multiple arguments.")
+{
+  std::string command = "test.exe -d project/plugins project/assets project/shaders -o true";
+  cppli::raw_command_line cmd(command);
+  REQUIRE(!cmd.is_empty());
+  std::string command_string = cmd.get_command();
+  REQUIRE(command_string == "test.exe");
+  REQUIRE(cmd.has_option("d"));
+  std::vector<cppli::variant_literal> arguments;
+  REQUIRE(cmd.get_option_arguments("d", arguments));
+  REQUIRE(arguments.size() == 3);
+
+  REQUIRE(arguments[0].get_type() == cppli::variant_type::string);
+  REQUIRE(arguments[0].get_string() == "project/plugins");
+
+  REQUIRE(arguments[1].get_type() == cppli::variant_type::string);
+  REQUIRE(arguments[1].get_string() == "project/assets");
+
+  REQUIRE(arguments[2].get_type() == cppli::variant_type::string);
+  REQUIRE(arguments[2].get_string() == "project/shaders");
+
+  arguments.clear();
+
+  REQUIRE(cmd.get_option_arguments("o", arguments));
+  REQUIRE(arguments.size() == 1);
+  REQUIRE(arguments[0].get_type() == cppli::variant_type::boolean);
+  REQUIRE(arguments[0].get_bool() == true);
+}
+
 TEST_CASE("raw runtime console command with parameters but no options.")
 {
   std::string command = "SetShowFPS true";
