@@ -151,3 +151,16 @@ TEST_CASE("raw command line derive command from identifiers.")
   REQUIRE(arguments[0].get_type() == cppli::variant_type::boolean);
   REQUIRE(arguments[0].get_bool() == false);
 }
+
+TEST_CASE("raw runtime console command with parameters but no options.")
+{
+  std::string command = "SetShowFPS true";
+  cppli::raw_command_line cmd(command);
+  REQUIRE(!cmd.is_empty());
+  REQUIRE(cmd.get_command() == "SetShowFPS");
+  std::vector<cppli::variant_literal> arguments;
+  cmd.get_command_line_arguments(arguments);
+  REQUIRE(arguments.size() == 1);
+  REQUIRE(arguments[0].get_type() == cppli::variant_type::boolean);
+  REQUIRE(arguments[0].get_bool() == true);
+}
