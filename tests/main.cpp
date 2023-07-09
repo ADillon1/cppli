@@ -23,7 +23,7 @@ TEST_CASE("single parameter option test.")
   REQUIRE(cli.execute(command) == true);
 }*/
 
-TEST_CASE("raw command line single boolean option.")
+TEST_CASE("raw command line single boolean option true.")
 {
   std::string command = "\"test.exe\" --option1 true";
   cppli::raw_command_line cmd(command);
@@ -32,6 +32,19 @@ TEST_CASE("raw command line single boolean option.")
   REQUIRE(cmd.get_option_arguments("option1", arguments));
   REQUIRE(arguments.size() == 1);
   REQUIRE(arguments[0].get_type() == cppli::variant_type::boolean);
+  REQUIRE(arguments[0].get_bool() == true);
+}
+
+TEST_CASE("raw command line single boolean option false.")
+{
+  std::string command = "\"test.exe\" --option1 false";
+  cppli::raw_command_line cmd(command);
+  REQUIRE(cmd.has_option("option1"));
+  std::vector<cppli::variant_literal> arguments;
+  REQUIRE(cmd.get_option_arguments("option1", arguments));
+  REQUIRE(arguments.size() == 1);
+  REQUIRE(arguments[0].get_type() == cppli::variant_type::boolean);
+  REQUIRE(arguments[0].get_bool() == false);
 }
 
 TEST_CASE("raw command line single integer option.")
@@ -43,6 +56,7 @@ TEST_CASE("raw command line single integer option.")
   REQUIRE(cmd.get_option_arguments("option1", arguments));
   REQUIRE(arguments.size() == 1);
   REQUIRE(arguments[0].get_type() == cppli::variant_type::integer);
+  REQUIRE(arguments[0].get_int() == 10);
 }
 
 TEST_CASE("raw command line single float option.")
@@ -54,6 +68,19 @@ TEST_CASE("raw command line single float option.")
   REQUIRE(cmd.get_option_arguments("option1", arguments));
   REQUIRE(arguments.size() == 1);
   REQUIRE(arguments[0].get_type() == cppli::variant_type::floating_point);
+  REQUIRE(arguments[0].get_float() == 10.0f);
+}
+
+TEST_CASE("raw command line single float option (with f specifier).")
+{
+  std::string command = "\"test.exe\" --option1 10.0f";
+  cppli::raw_command_line cmd(command);
+  REQUIRE(cmd.has_option("option1"));
+  std::vector<cppli::variant_literal> arguments;
+  REQUIRE(cmd.get_option_arguments("option1", arguments));
+  REQUIRE(arguments.size() == 1);
+  REQUIRE(arguments[0].get_type() == cppli::variant_type::floating_point);
+  REQUIRE(arguments[0].get_float() == 10.0f);
 }
 
 TEST_CASE("raw command line single string option.")
