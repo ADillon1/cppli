@@ -32,6 +32,15 @@ TEST_CASE("raw command line empty")
     REQUIRE(cmd2.is_empty());
 }
 
+TEST_CASE("raw command line with no arguments or options.")
+{
+  std::string command = "test.command";
+  cppli::raw_command_line cmd(command);
+  REQUIRE(!cmd.is_empty());
+  std::string command_string = cmd.get_command();
+  REQUIRE(command == command_string);
+}
+
 TEST_CASE("raw command line single boolean option true.")
 {
   std::string command = "\"test.exe\" --option1 true";
