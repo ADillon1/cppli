@@ -334,6 +334,13 @@ namespace internal
       std::unique_ptr<internal::option_node> option_node = std::make_unique<internal::option_node>();
       option_node->m_name = std::string(context.get_previous_token().m_stream, context.get_previous_token().m_length);
 
+      bool equal_sign = false; 
+      
+      if (!context.end_of_token_stream())
+      {
+        equal_sign = context.accept(e_token_id::direct_assignment);
+      }
+
       while (!context.end_of_token_stream())
       {
         std::unique_ptr<internal::parameter_node> next_parameter = parse_parameter(context);
@@ -344,6 +351,11 @@ namespace internal
         }
 
         option_node->m_parameters.push_back(std::move(next_parameter));
+      }
+
+      if (equal_sign)
+      {
+        context.expect(option_node->m_parameters.size() > 0, "An option with an equal sign must have at least 1 argument.");
       }
 
       return std::move(option_node);

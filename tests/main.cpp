@@ -159,6 +159,18 @@ TEST_CASE("raw command line single char option")
   REQUIRE(arguments[0].get_string() == "c");
 }
 
+TEST_CASE("raw command line with 1 option and argument with optional = sign")
+{
+    std::string command = "\"test.exe\" --option1=true";
+  cppli::raw_command_line cmd(command);
+  REQUIRE(cmd.has_option("option1"));
+  std::vector<cppli::variant_literal> arguments;
+  REQUIRE(cmd.get_option_arguments("option1", arguments));
+  REQUIRE(arguments.size() == 1);
+  REQUIRE(arguments[0].get_type() == cppli::variant_type::boolean);
+  REQUIRE(arguments[0].get_bool() == true);
+}
+
 TEST_CASE("raw command line derive command from identifiers.")
 {
   std::string command = "test.exe --option1 false";
