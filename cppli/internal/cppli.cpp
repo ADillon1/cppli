@@ -167,7 +167,7 @@ namespace internal
 
     void remove_identifier_tokens(const std::vector<std::string>& identifiers)
     {
-      for (size_t i = 0; i < m_token_context.m_tokens.size();)
+      for (int i = 0; i < m_token_context.m_tokens.size();)
       {
         bool found = false;
 
@@ -307,6 +307,7 @@ namespace internal
       return nullptr;
     }
     
+    return nullptr;
   }
   
   std::unique_ptr<internal::ast_node> raw_command_line::parse_expression(internal::command_parsing_context& context)

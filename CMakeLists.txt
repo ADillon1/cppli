@@ -47,9 +47,6 @@ file(GLOB_RECURSE SOURCES
 add_library(cppli SHARED ${SOURCES})
 target_link_libraries(cppli tokenize)
 target_compile_definitions(cppli PRIVATE CPPLI_EXPORT)
-if (MSVC)
-    target_compile_options(cppli PRIVATE /wd4251)
-endif()
 
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

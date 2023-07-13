@@ -1,5 +1,10 @@
 #pragma once
 
+#ifdef _WIN32
+#  pragma warning( push )
+#  pragma warning( disable: 4251 )
+#endif
+
 #include <cppli/internal/module.hpp>
 #include <cppli/internal/nodes.hpp>
 #include <vector>
@@ -11,7 +16,7 @@
 
 namespace cppli
 {
-  struct variant_literal;
+  class variant_literal;
 
 namespace internal
 {
@@ -165,7 +170,8 @@ namespace internal
 
     }
   };
-
-  
 }
 
+#ifdef _WIN32
+#  pragma warning( pop )
+#endif
