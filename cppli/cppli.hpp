@@ -14,9 +14,15 @@
 #include <typeinfo>
 #include <memory>
 
+namespace tokenize
+{
+  struct parsing_context;
+}
+
 namespace cppli
 {
   class variant_literal;
+  typedef void (*logger_callback_fn)(const char* logging_message);
 
 namespace internal
 {
@@ -24,7 +30,6 @@ namespace internal
   struct command_node;
   struct option_node;
   struct parameter_node;
-  struct command_parsing_context;
 
   template<typename> struct function_traits;
 
@@ -81,19 +86,20 @@ namespace internal
   {
     std::string m_command_string;
     std::unique_ptr<internal::command_node> m_root_command;
+    logger_callback_fn m_logging_callback = nullptr;
 
-    bool parse_path(internal::command_parsing_context& context, std::string& out_path);
+    bool parse_path(tokenize::parsing_context& context, std::string& out_path);
     std::unique_ptr<internal::command_node> parse_command();
-    std::unique_ptr<internal::ast_node> parse_expression(internal::command_parsing_context& context);
-    std::unique_ptr<internal::option_node> parse_option(internal::command_parsing_context& context);
-    std::unique_ptr<internal::parameter_node> parse_parameter(internal::command_parsing_context& context);
+    std::unique_ptr<internal::ast_node> parse_expression(tokenize::parsing_context& context);
+    std::unique_ptr<internal::option_node> parse_option(tokenize::parsing_context& context);
+    std::unique_ptr<internal::parameter_node> parse_parameter(tokenize::parsing_context& context);
 
   public:
     raw_command_line();
 
-    raw_command_line(int argc, char** argv);
+    raw_command_line(int argc, char** argv, logger_callback_fn logging_callback = nullptr);
 
-    raw_command_line(const std::string& command);
+    raw_command_line(const std::string& command, logger_callback_fn logging_callback = nullptr);
 
     raw_command_line(const nullptr_t& null);
 
@@ -118,6 +124,7 @@ namespace internal
   {
     bool m_enable_help;
     std::string m_application_description;
+    logger_callback_fn m_logging_callback;
   };
 
   class CPPLI_API command_line

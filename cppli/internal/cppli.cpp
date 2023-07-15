@@ -4,7 +4,6 @@
 #include <tokenize/tokenize.hpp>
 #include <cppli/internal/visitor.hpp>
 #include <exception>
-#include <iostream>
 
 namespace cppli
 {
@@ -63,170 +62,14 @@ namespace internal
       return visitor_result::continued;
     }
   };
-
-  struct command_parsing_context
-  {
-    token_stream_context m_token_context;
-    int m_current_token = 0;
-    int m_previous_token = 0;
-
-    bool end_of_token_stream()
-    {
-      return m_current_token >= m_token_context.m_tokens.size();
-    }
-
-    const token& get_current_token()
-    {
-      return m_token_context.m_tokens[m_current_token];
-    }
-
-    const token& get_previous_token()
-    {
-      return m_token_context.m_tokens[m_previous_token];
-    }
-
-    void set_current_token_index(int new_index = 0)
-    {
-      m_current_token = std::min(static_cast<int>(m_token_context.m_tokens.size()) - 1, new_index);
-      m_previous_token = m_current_token;
-    }
-
-    void advance_token_stream(bool skip_whitespace_and_comments = true)
-    {
-      m_previous_token = m_current_token;
-      ++m_current_token;
-
-      if (skip_whitespace_and_comments && !end_of_token_stream())
-      {
-        while (m_token_context.m_tokens[m_current_token].m_id == e_token_id::new_line ||
-          m_token_context.m_tokens[m_current_token].m_id == e_token_id::whitespace ||
-          m_token_context.m_tokens[m_current_token].m_id == e_token_id::single_line_comment ||
-          m_token_context.m_tokens[m_current_token].m_id == e_token_id::multi_line_comment)
-        {
-          ++m_current_token;
-
-          if (end_of_token_stream())
-          {
-            break;
-          }
-        }
-      }
-    }
-
-    bool accept(const std::string& identifier, bool skip_whitespace_and_comments = true)
-    {
-      expect(!end_of_token_stream(), "Unexpected end of stream.");
-
-      if (std::string(m_token_context.m_tokens[m_current_token].m_stream, m_token_context.m_tokens[m_current_token].m_length) == identifier)
-      {
-        advance_token_stream(skip_whitespace_and_comments);
-        return true;
-      }
-
-      return false;
-    }
-
-    bool accept(e_token_id id, bool skip_whitespace_and_comments = true)
-    {
-      expect(!end_of_token_stream(), "Unexpected end of stream.");
-
-      if (m_token_context.m_tokens[m_current_token].m_id == id)
-      {
-        advance_token_stream(skip_whitespace_and_comments);
-        return true;
-      }
-
-     return false;
-    }
-
-    bool expect(e_token_id id, const std::string& error_message, bool skip_whitespace_and_comments = true)
-    {
-      return expect(accept(id, skip_whitespace_and_comments), error_message);
-    }
-
-    bool expect(bool expression, const std::string& error_message)
-    {
-      if (expression)
-      {
-        return true;
-      }
-
-      // TODO: Exception Handler Class
-      if (end_of_token_stream())
-      {
-        throw std::exception(error_message.c_str());
-        //throw CHeaderToolException(CurrentFilePath, CurrentLineNumber, InErrorMessage);
-      }
-      else
-      {
-        token& error_token = m_token_context.m_tokens[m_previous_token];
-        //throw CHeaderToolException(ErrorToken.FilePath, ErrorToken.LineNumber, InErrorMessage);
-        throw std::exception(error_message.c_str());
-      }
-    }
-
-    void remove_identifier_tokens(const std::vector<std::string>& identifiers)
-    {
-      for (int i = 0; i < m_token_context.m_tokens.size();)
-      {
-        bool found = false;
-
-        if (m_token_context.m_tokens[i].m_id == e_token_id::identifier)
-        {
-          std::string token_string = std::string(m_token_context.m_tokens[i].m_stream, m_token_context.m_tokens[i].m_length);
-
-          for (int j = 0; j < identifiers.size(); ++j)
-          {
-            if (token_string == identifiers[j])
-            {
-              remove_tokens(i, i + 1);
-              found = true;
-              break;
-            }
-          }
-        }
-
-        if (!found)
-        {
-          ++i;
-        }
-      }
-    }
-
-    void remove_tokens(int start_index, int end_index)
-    {
-      if (start_index >= end_index || start_index < 0 || end_index >= m_token_context.m_tokens.size())
-      {
-        return;
-      }
-
-      m_token_context.m_tokens.erase(m_token_context.m_tokens.begin() + start_index + 1, m_token_context.m_tokens.begin() + end_index);
-    }
-
-    void remove_tokens(e_token_id id)
-    {
-      std::vector<token> new_list;
-      new_list.reserve(m_token_context.m_tokens.size());
-      for (size_t i = 0; i < m_token_context.m_tokens.size(); ++i)
-      {
-        if (m_token_context.m_tokens[i].m_id != id)
-        {
-          new_list.push_back(m_token_context.m_tokens[i]);
-        }
-      }
-
-      m_token_context.m_tokens = new_list;
-    }
-
-  };
 }
 
-  bool raw_command_line::parse_path(internal::command_parsing_context& context, std::string& out_path)
+  bool raw_command_line::parse_path(tokenize::parsing_context& context, std::string& out_path)
   {
     int begin = context.m_current_token;
     out_path.clear();
 
-    if (context.accept(e_token_id::string_literal))
+    if (context.accept(tokenize::token_id::string_literal))
     {
       out_path.assign(context.get_previous_token().m_stream + 1, context.get_previous_token().m_length - 2);
       return true;
@@ -235,11 +78,11 @@ namespace internal
     while (!context.end_of_token_stream())
     {
       if (
-        context.accept(e_token_id::identifier, false)     ||
-        context.accept(e_token_id::forward_slash, false)  ||
-        context.accept(e_token_id::division, false)       ||
-        context.accept(e_token_id::colon, false)          ||
-        context.accept(e_token_id::member_access, false))
+        context.accept(tokenize::token_id::identifier, false)     ||
+        context.accept(tokenize::token_id::forward_slash, false)  ||
+        context.accept(tokenize::token_id::division, false)       ||
+        context.accept(tokenize::token_id::colon, false)          ||
+        context.accept(tokenize::token_id::member_access, false))
       {
         out_path += std::string(context.get_previous_token().m_stream, context.get_previous_token().m_length);
       }
@@ -253,7 +96,7 @@ namespace internal
     {
       if (!context.end_of_token_stream())
       {
-        context.accept(e_token_id::whitespace);
+        context.accept(tokenize::token_id::whitespace);
       }
 
       return true;
@@ -267,16 +110,16 @@ namespace internal
   {
     try
     {
-      dfa_cpp dfa;
-      internal::command_parsing_context context;
-      tokenize::string(m_command_string, dfa, context.m_token_context);
+      tokenize::dfa_cpp dfa;
+      tokenize::parsing_context context;
+      tokenize::from_string(m_command_string, dfa, context.m_token_context);
       std::string command_string;
       if (parse_path(context, command_string))
       {
         // Remove whitespace.
-        context.remove_tokens(e_token_id::new_line);
-        context.remove_tokens(e_token_id::single_line_comment);
-        context.remove_tokens(e_token_id::multi_line_comment);
+        context.remove_tokens(tokenize::token_id::new_line);
+        context.remove_tokens(tokenize::token_id::single_line_comment);
+        context.remove_tokens(tokenize::token_id::multi_line_comment);
 
         std::unique_ptr<internal::command_node> command_node = std::make_unique<internal::command_node>();
         command_node->m_name = command_string;
@@ -303,14 +146,17 @@ namespace internal
     }
     catch(const std::exception& e)
     {
-      std::cout << e.what() << '\n';
+      if (m_logging_callback)
+      {
+        m_logging_callback(e.what());
+      }
       return nullptr;
     }
     
     return nullptr;
   }
   
-  std::unique_ptr<internal::ast_node> raw_command_line::parse_expression(internal::command_parsing_context& context)
+  std::unique_ptr<internal::ast_node> raw_command_line::parse_expression(tokenize::parsing_context& context)
   {
     std::unique_ptr<internal::ast_node> expression;
 
@@ -327,11 +173,11 @@ namespace internal
     return nullptr;
   }
   
-  std::unique_ptr<internal::option_node> raw_command_line::parse_option(internal::command_parsing_context& context)
+  std::unique_ptr<internal::option_node> raw_command_line::parse_option(tokenize::parsing_context& context)
   {
-    if (context.accept(e_token_id::subtraction, false) || context.accept(e_token_id::decrement, false))
+    if (context.accept(tokenize::token_id::subtraction, false) || context.accept(tokenize::token_id::decrement, false))
     {
-      context.expect(e_token_id::identifier, std::string("Expected an identifier for command line option."));
+      context.expect(tokenize::token_id::identifier, std::string("Expected an identifier for command line option."));
       std::unique_ptr<internal::option_node> option_node = std::make_unique<internal::option_node>();
       option_node->m_name = std::string(context.get_previous_token().m_stream, context.get_previous_token().m_length);
 
@@ -339,7 +185,7 @@ namespace internal
       
       if (!context.end_of_token_stream())
       {
-        equal_sign = context.accept(e_token_id::direct_assignment);
+        equal_sign = context.accept(tokenize::token_id::direct_assignment);
       }
 
       while (!context.end_of_token_stream())
@@ -365,7 +211,7 @@ namespace internal
     return nullptr;
   }
   
-  std::unique_ptr<internal::parameter_node> raw_command_line::parse_parameter(internal::command_parsing_context& context)
+  std::unique_ptr<internal::parameter_node> raw_command_line::parse_parameter(tokenize::parsing_context& context)
   {
     std::string parameter_path;
 
@@ -377,56 +223,56 @@ namespace internal
       return std::move(parameter_node);
     }
 
-    if (context.accept(e_token_id::string_literal))
+    if (context.accept(tokenize::token_id::string_literal))
     {
       std::unique_ptr<internal::parameter_node> parameter_node = std::make_unique<internal::parameter_node>();
       parameter_node->m_name.assign(context.get_previous_token().m_stream + 1, context.get_previous_token().m_length - 2);
       parameter_node->m_type = variant_type::string;
       return std::move(parameter_node);
     }
-    else if (context.accept(e_token_id::integer_literal))
+    else if (context.accept(tokenize::token_id::integer_literal))
     {
       std::unique_ptr<internal::parameter_node> parameter_node = std::make_unique<internal::parameter_node>();
       parameter_node->m_name.assign(context.get_previous_token().m_stream, context.get_previous_token().m_length);
       parameter_node->m_type = variant_type::integer;
       return std::move(parameter_node);
     }
-    if (context.accept(e_token_id::float_literal))
+    if (context.accept(tokenize::token_id::float_literal))
     {
       std::unique_ptr<internal::parameter_node> parameter_node = std::make_unique<internal::parameter_node>();
       parameter_node->m_name.assign(context.get_previous_token().m_stream, context.get_previous_token().m_length);
       parameter_node->m_type = variant_type::floating_point;
       return std::move(parameter_node);
     }
-    else if (context.accept(e_token_id::character_literal))
+    else if (context.accept(tokenize::token_id::character_literal))
     {
       std::unique_ptr<internal::parameter_node> parameter_node = std::make_unique<internal::parameter_node>();
       parameter_node->m_name.assign(context.get_previous_token().m_stream + 1, context.get_previous_token().m_length - 2);
       parameter_node->m_type = variant_type::string;
       return std::move(parameter_node);
     }
-    else if (context.accept(e_token_id::hex_literal))
+    else if (context.accept(tokenize::token_id::hex_literal))
     {
       std::unique_ptr<internal::parameter_node> parameter_node = std::make_unique<internal::parameter_node>();
       parameter_node->m_name.assign(context.get_previous_token().m_stream, context.get_previous_token().m_length);
       parameter_node->m_type = variant_type::integer;
       return std::move(parameter_node);
     }
-    else if (context.accept(e_token_id::binary_literal))
+    else if (context.accept(tokenize::token_id::binary_literal))
     {
       std::unique_ptr<internal::parameter_node> parameter_node = std::make_unique<internal::parameter_node>();
       parameter_node->m_name.assign(context.get_previous_token().m_stream, context.get_previous_token().m_length);
       parameter_node->m_type = variant_type::integer;
       return std::move(parameter_node);
     }
-    else if (context.accept(e_token_id::_true))
+    else if (context.accept(tokenize::token_id::_true))
     {
       std::unique_ptr<internal::parameter_node> parameter_node = std::make_unique<internal::parameter_node>();
       parameter_node->m_name.assign(context.get_previous_token().m_stream, context.get_previous_token().m_length);
       parameter_node->m_type = variant_type::boolean;
       return std::move(parameter_node);
     }
-    else if (context.accept(e_token_id::_false))
+    else if (context.accept(tokenize::token_id::_false))
     {
       std::unique_ptr<internal::parameter_node> parameter_node = std::make_unique<internal::parameter_node>();
       parameter_node->m_name.assign(context.get_previous_token().m_stream, context.get_previous_token().m_length);
@@ -455,10 +301,11 @@ namespace internal
   raw_command_line::raw_command_line()
     : m_command_string()
     , m_root_command()
+    , m_logging_callback()
   {
   }
 
-  raw_command_line::raw_command_line(int argc, char** argv)
+  raw_command_line::raw_command_line(int argc, char** argv, logger_callback_fn logging_callback)
   {
     m_command_string = '"';
     m_command_string += argv[0];
@@ -471,12 +318,14 @@ namespace internal
       m_command_string += ' ';
     }
 
+    m_logging_callback = logging_callback;
     m_root_command = parse_command();
   }
 
-  raw_command_line::raw_command_line(const std::string& command)
+  raw_command_line::raw_command_line(const std::string& command, logger_callback_fn logging_callback)
   {
     m_command_string = command;
+    m_logging_callback = logging_callback;
     m_root_command = parse_command();
   }
 

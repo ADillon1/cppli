@@ -1,11 +1,26 @@
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #include <catch2/catch.hpp>
 #include <cppli/cppli.hpp>
+#include <iostream>
 
 bool test_fn(int testing)
 {
   return false;
 }
+
+static int logger_count = 0;
+
+void logger_callback_test(const char* logging_message)
+{
+  ++logger_count;
+  std::cout << "Console command failed with returned error: " << logging_message << std::endl;
+
+  if (logger_count == 1)
+  {
+    std::cout << "Note, you should only really see one log message from the tests at the moment." << std::endl;
+  }
+}
+
 /*
 TEST_CASE("single parameter option test.")
 {
@@ -250,4 +265,14 @@ TEST_CASE("raw runtime console command with parameters but no options.")
   REQUIRE(arguments.size() == 1);
   REQUIRE(arguments[0].get_type() == cppli::variant_type::boolean);
   REQUIRE(arguments[0].get_bool() == true);
+}
+
+TEST_CASE("raw command line or consoel command with logging enabled.")
+{
+  // we expect this to exhibit a parsing error because the option name is missing.
+  // It should emmit an error and fail, calling our custom logger callback.
+  std::string command = "SomeInvalidCommand --";
+  cppli::raw_command_line cmd(command, logger_callback_test);
+  REQUIRE(cmd.is_empty());
+  REQUIRE(logger_count == 1);
 }
