@@ -21,22 +21,26 @@ void logger_callback_test(const char* logging_message)
   }
 }
 
-/*
+
 TEST_CASE("single parameter option test.")
 {
-  std::string command = "test.exe --option1 1";
+  std::string command = "test.exe --option 1";
   cppli::command_line_config config;
   cppli::command_line cli(config);
   //cli.add_option("o", "option", "this is my first option. Isn't it neat?", test_fn);
-  cli.add_option("o", "option", "this is my first option. Isn't it neat?", 
+  cli.add_option(
+    "o", 
+    "option", 
+    "this is my first option. Isn't it neat?", 
+    false,
   [](int value) 
   {
     printf("test! %d", value);
     return true;
   });
 
-  REQUIRE(cli.execute(command) == true);
-}*/
+  REQUIRE(cli.execute(command));
+}
 
 TEST_CASE("raw command line empty")
 {

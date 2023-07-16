@@ -23,6 +23,16 @@ namespace cppli
 {
   typedef void (*logger_callback_fn)(const char* logging_message);
 
+    struct command_line_config
+  {
+    std::string m_application_name;
+    std::string m_application_description;
+    int m_major_version;
+    int m_minor_version;
+    int m_patch_version;
+    logger_callback_fn m_logging_callback;
+  };
+
 namespace internal
 {
   struct ast_node;
@@ -62,24 +72,62 @@ namespace internal
 
     struct function_wrapper_base
     {
-      virtual ~function_wrapper_base() = default;
+      std::string m_shorthand;
+      std::string m_name;
+      std::string m_description;
+      bool m_is_required;
 
-      virtual bool execute(const std::vector<variant_literal>& arguments) = 0;
-    };
-
-    template <typename fn>
-    struct function_wrapper
-    {
-      std::string m_option_shorthand;
-      std::string m_option_name;
-      std::string m_option_description;
-      fn function;
-
-      template <typename F>
-      function_wrapper(F&& f) 
-        : function(std::forward<F>(f)) 
+      function_wrapper_base(
+        std::string shorthand,
+        std::string name,
+        std::string description,
+        bool is_required
+        )
+          : m_shorthand(shorthand)
+          , m_name(name)
+          , m_description(description)
+          , m_is_required(is_required)
         {
         }
+
+      virtual ~function_wrapper_base() = default;
+
+      virtual bool execute(const command_line_config& config, const std::vector<variant_literal>& arguments) = 0;
+    };
+
+    template <typename param_type>
+    struct function_wrapper_single_param : public function_wrapper_base
+    {
+
+      std::function<bool(param_type)> m_function;
+
+      function_wrapper_single_param(
+        const std::string& shorthand,
+        const std::string& name,
+        const std::string& description,
+        bool is_required,
+        std::function<bool(param_type)>&& f) 
+        : function_wrapper_base(shorthand, name, description, is_required)
+        , m_function(f) 
+        {
+        }
+      
+      virtual bool execute(const command_line_config& config, const std::vector<variant_literal>& arguments)
+      {
+        if (arguments.size() != 1)
+        {
+          // Mismatched argument count.
+          return false;
+        }
+
+        if (!std::holds_alternative<param_type>(arguments[0]))
+        {
+          // Param does not match type.
+          return false;
+        }
+
+        return m_function(std::get<param_type>(arguments[0]));
+      }
     };
   }
 
@@ -104,7 +152,9 @@ namespace internal
 
     raw_command_line(const nullptr_t& null);
 
-    raw_command_line& operator=(const raw_command_line& Rhs);
+    raw_command_line(raw_command_line&& rhs);
+
+    raw_command_line& operator=(const raw_command_line& rhs);
 
     bool is_empty() const;
 
@@ -121,18 +171,13 @@ namespace internal
     void get_command_line_arguments(std::vector<variant_literal>& OutArguments);
   };
 
-  struct command_line_config
-  {
-    bool m_enable_help;
-    std::string m_application_description;
-    logger_callback_fn m_logging_callback;
-  };
-
   class CPPLI_API command_line
   {
     command_line_config m_config;
-    raw_command_line m_internal_command_line;
-    std::unordered_map<std::string, std::shared_ptr<internal::function_wrapper_base>> m_options;
+    std::unique_ptr<raw_command_line> m_internal_command_line;
+    std::vector<std::shared_ptr<internal::function_wrapper_base>> m_options;
+
+    bool internal_execute();
 
     public:
 
@@ -141,7 +186,7 @@ namespace internal
     bool execute(std::string& command);
 
     template<typename fn>
-    void add_option(const std::string& short_hand, const std::string& command_name, const std::string& description, bool required, fn callback)
+    void add_option(const std::string& short_hand, const std::string& name, const std::string& description, bool required, fn callback)
     {
       using traits = internal::function_traits<fn>;
       static_assert(traits::arity == 1, "Command line callbacks can only support either a single argument or a vector of a supported argument type.");
@@ -169,7 +214,15 @@ namespace internal
         is_vector_string 
       , "The argument for the callback can only be a bool, int, float, string, or a vector of any of the previously mentioned types.");
 
-
+      if constexpr (traits::arity == 1)
+      {
+        m_options.push_back(std::make_shared<internal::function_wrapper_single_param<option_type>>(
+              short_hand, 
+              name, 
+              description, 
+              required, 
+              std::move(callback)));
+      }
     }
   };
 }

@@ -215,25 +215,6 @@ namespace internal
   {
     std::string parameter_path;
 
-    /*
-      if (type == variant_type::string)
-      {
-        m_as_string = text;
-      }
-      else if (type == variant_type::integer)
-      {
-        m_as_int = atoi(text.c_str());
-      }
-      else if (type == variant_type::floating_point)
-      {
-        m_as_float = static_cast<float>(atof(text.c_str()));
-      }
-      else if (type == variant_type::boolean)
-      {
-        m_as_bool = text == "true" ? true : false;
-      }
-    */
-
     if (parse_path(context, parameter_path))
     {
       std::unique_ptr<internal::parameter_node> parameter_node = std::make_unique<internal::parameter_node>();
@@ -302,18 +283,60 @@ namespace internal
     return nullptr;
   }
 
+  bool command_line::internal_execute()
+  {
+    if (m_internal_command_line->is_empty())
+    {
+      return false;
+    }
+
+    bool success = true;
+
+    // loop through each option, check if its represented and execute if able.
+
+    for (auto& option : m_options)
+    {
+      std::vector<variant_literal> arguments;
+      if (m_internal_command_line->get_option_arguments({option->m_shorthand, option->m_name}, arguments))
+      {
+        success &= option->execute(m_config, arguments);
+      }
+      else if (option->m_is_required)
+      {
+        success = false;
+      }
+    }
+
+    return success;
+  }
+
   command_line::command_line(const command_line_config& config)
+    : m_config(config)
+    , m_internal_command_line(nullptr)
+    , m_options()
   {
 
   }
 
   bool command_line::execute(int argc, char** argv)
   {
+    if (!m_internal_command_line)
+    {
+      m_internal_command_line = std::make_unique<raw_command_line>(argc, argv, m_config.m_logging_callback);
+      return internal_execute();
+    }
+
     return false;
   }
 
   bool command_line::execute(std::string& command)
   {
+    if (!m_internal_command_line)
+    {
+      m_internal_command_line = std::make_unique<raw_command_line>(command, m_config.m_logging_callback);
+      return internal_execute();
+    }
+
     return false;
   }
 
@@ -321,6 +344,13 @@ namespace internal
     : m_command_string()
     , m_root_command()
     , m_logging_callback()
+  {
+  }
+  
+  raw_command_line::raw_command_line(raw_command_line&& rhs)
+    : m_command_string(std::move(rhs.m_command_string))
+    , m_root_command(std::move(rhs.m_root_command))
+    , m_logging_callback(std::move(rhs.m_logging_callback))
   {
   }
 
@@ -361,7 +391,6 @@ namespace internal
     m_root_command = parse_command();
     return *this;
   }
-
   
   bool raw_command_line::is_empty() const
   {
