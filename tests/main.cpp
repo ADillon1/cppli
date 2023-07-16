@@ -74,8 +74,8 @@ TEST_CASE("raw command line single boolean option true.")
   std::vector<cppli::variant_literal> arguments;
   REQUIRE(cmd.get_option_arguments("option1", arguments));
   REQUIRE(arguments.size() == 1);
-  REQUIRE(arguments[0].get_type() == cppli::variant_type::boolean);
-  REQUIRE(arguments[0].get_bool() == true);
+  REQUIRE(std::holds_alternative<bool>(arguments[0]));
+  REQUIRE(std::get<bool>(arguments[0]) == true);
 }
 
 TEST_CASE("raw command line single boolean option false.")
@@ -86,8 +86,8 @@ TEST_CASE("raw command line single boolean option false.")
   std::vector<cppli::variant_literal> arguments;
   REQUIRE(cmd.get_option_arguments("option1", arguments));
   REQUIRE(arguments.size() == 1);
-  REQUIRE(arguments[0].get_type() == cppli::variant_type::boolean);
-  REQUIRE(arguments[0].get_bool() == false);
+  REQUIRE(std::holds_alternative<bool>(arguments[0]));
+  REQUIRE(std::get<bool>(arguments[0]) == false);
 }
 
 TEST_CASE("raw command line single integer option.")
@@ -98,8 +98,8 @@ TEST_CASE("raw command line single integer option.")
   std::vector<cppli::variant_literal> arguments;
   REQUIRE(cmd.get_option_arguments("option1", arguments));
   REQUIRE(arguments.size() == 1);
-  REQUIRE(arguments[0].get_type() == cppli::variant_type::integer);
-  REQUIRE(arguments[0].get_int() == 10);
+  REQUIRE(std::holds_alternative<int>(arguments[0]));
+  REQUIRE(std::get<int>(arguments[0]) == 10);
 }
 
 TEST_CASE("raw command line single float option.")
@@ -110,8 +110,8 @@ TEST_CASE("raw command line single float option.")
   std::vector<cppli::variant_literal> arguments;
   REQUIRE(cmd.get_option_arguments("option1", arguments));
   REQUIRE(arguments.size() == 1);
-  REQUIRE(arguments[0].get_type() == cppli::variant_type::floating_point);
-  REQUIRE(arguments[0].get_float() == 10.0f);
+  REQUIRE(std::holds_alternative<float>(arguments[0]));
+  REQUIRE(std::get<float>(arguments[0]) == 10.0f);
 }
 
 TEST_CASE("raw command line single float option (with f specifier).")
@@ -122,8 +122,8 @@ TEST_CASE("raw command line single float option (with f specifier).")
   std::vector<cppli::variant_literal> arguments;
   REQUIRE(cmd.get_option_arguments("option1", arguments));
   REQUIRE(arguments.size() == 1);
-  REQUIRE(arguments[0].get_type() == cppli::variant_type::floating_point);
-  REQUIRE(arguments[0].get_float() == 10.0f);
+  REQUIRE(std::holds_alternative<float>(arguments[0]));
+  REQUIRE(std::get<float>(arguments[0]) == 10.0f);
 }
 
 TEST_CASE("raw command line single string option.")
@@ -134,8 +134,8 @@ TEST_CASE("raw command line single string option.")
   std::vector<cppli::variant_literal> arguments;
   REQUIRE(cmd.get_option_arguments("option1", arguments));
   REQUIRE(arguments.size() == 1);
-  REQUIRE(arguments[0].get_type() == cppli::variant_type::string);
-  REQUIRE(arguments[0].get_string() == "This is a string");
+  REQUIRE(std::holds_alternative<std::string>(arguments[0]));
+  REQUIRE(std::get<std::string>(arguments[0]) == "This is a string");
 }
 
 TEST_CASE("raw command line single string identifier option.")
@@ -146,8 +146,8 @@ TEST_CASE("raw command line single string identifier option.")
   std::vector<cppli::variant_literal> arguments;
   REQUIRE(cmd.get_option_arguments("option1", arguments));
   REQUIRE(arguments.size() == 1);
-  REQUIRE(arguments[0].get_type() == cppli::variant_type::string);
-  REQUIRE(arguments[0].get_string() == "ThisIsAString");
+  REQUIRE(std::holds_alternative<std::string>(arguments[0]));
+  REQUIRE(std::get<std::string>(arguments[0]) == "ThisIsAString");
 }
 
 TEST_CASE("raw command line single path option")
@@ -158,8 +158,8 @@ TEST_CASE("raw command line single path option")
   std::vector<cppli::variant_literal> arguments;
   REQUIRE(cmd.get_option_arguments("option1", arguments));
   REQUIRE(arguments.size() == 1);
-  REQUIRE(arguments[0].get_type() == cppli::variant_type::string);
-  REQUIRE(arguments[0].get_string() == "Relative/Path");
+  REQUIRE(std::holds_alternative<std::string>(arguments[0]));
+  REQUIRE(std::get<std::string>(arguments[0]) == "Relative/Path");
 }
 
 TEST_CASE("raw command line single char option")
@@ -170,8 +170,8 @@ TEST_CASE("raw command line single char option")
   std::vector<cppli::variant_literal> arguments;
   REQUIRE(cmd.get_option_arguments("option1", arguments));
   REQUIRE(arguments.size() == 1);
-  REQUIRE(arguments[0].get_type() == cppli::variant_type::string);
-  REQUIRE(arguments[0].get_string() == "c");
+  REQUIRE(std::holds_alternative<std::string>(arguments[0]));
+  REQUIRE(std::get<std::string>(arguments[0]) == "c");
 }
 
 TEST_CASE("raw command line with 1 option and argument with optional = sign")
@@ -182,8 +182,8 @@ TEST_CASE("raw command line with 1 option and argument with optional = sign")
   std::vector<cppli::variant_literal> arguments;
   REQUIRE(cmd.get_option_arguments("option1", arguments));
   REQUIRE(arguments.size() == 1);
-  REQUIRE(arguments[0].get_type() == cppli::variant_type::boolean);
-  REQUIRE(arguments[0].get_bool() == true);
+  REQUIRE(std::holds_alternative<bool>(arguments[0]));
+  REQUIRE(std::get<bool>(arguments[0]) == true);
 }
 
 TEST_CASE("raw command line derive command from identifiers.")
@@ -194,8 +194,8 @@ TEST_CASE("raw command line derive command from identifiers.")
   std::vector<cppli::variant_literal> arguments;
   REQUIRE(cmd.get_option_arguments("option1", arguments));
   REQUIRE(arguments.size() == 1);
-  REQUIRE(arguments[0].get_type() == cppli::variant_type::boolean);
-  REQUIRE(arguments[0].get_bool() == false);
+  REQUIRE(std::holds_alternative<bool>(arguments[0]));
+  REQUIRE(std::get<bool>(arguments[0]) == false);
 }
 
 TEST_CASE("raw command line multiple options.")
@@ -208,20 +208,20 @@ TEST_CASE("raw command line multiple options.")
 
   REQUIRE(cmd.get_option_arguments("d", arguments));
   REQUIRE(arguments.size() == 1);
-  REQUIRE(arguments[0].get_type() == cppli::variant_type::string);
-  REQUIRE(arguments[0].get_string() == "project/plugins");
+  REQUIRE(std::holds_alternative<std::string>(arguments[0]));
+  REQUIRE(std::get<std::string>(arguments[0]) == "project/plugins");
   arguments.clear();
 
   REQUIRE(cmd.get_option_arguments("s", arguments));
   REQUIRE(arguments.size() == 1);
-  REQUIRE(arguments[0].get_type() == cppli::variant_type::floating_point);
-  REQUIRE(arguments[0].get_float() == 10.0f);
+  REQUIRE(std::holds_alternative<float>(arguments[0]));
+  REQUIRE(std::get<float>(arguments[0]) == 10.0f);
   arguments.clear();
   
   REQUIRE(cmd.get_option_arguments("a", arguments));
   REQUIRE(arguments.size() == 1);
-  REQUIRE(arguments[0].get_type() == cppli::variant_type::boolean);
-  REQUIRE(arguments[0].get_bool() == true);
+  REQUIRE(std::holds_alternative<bool>(arguments[0]));
+  REQUIRE(std::get<bool>(arguments[0]) == true);
   arguments.clear();
 }
 
@@ -237,21 +237,21 @@ TEST_CASE("raw command line with options that have multiple arguments.")
   REQUIRE(cmd.get_option_arguments("d", arguments));
   REQUIRE(arguments.size() == 3);
 
-  REQUIRE(arguments[0].get_type() == cppli::variant_type::string);
-  REQUIRE(arguments[0].get_string() == "project/plugins");
+  REQUIRE(std::holds_alternative<std::string>(arguments[0]));
+  REQUIRE(std::get<std::string>(arguments[0]) == "project/plugins");
 
-  REQUIRE(arguments[1].get_type() == cppli::variant_type::string);
-  REQUIRE(arguments[1].get_string() == "project/assets");
+  REQUIRE(std::holds_alternative<std::string>(arguments[1]));
+  REQUIRE(std::get<std::string>(arguments[1]) == "project/assets");
 
-  REQUIRE(arguments[2].get_type() == cppli::variant_type::string);
-  REQUIRE(arguments[2].get_string() == "project/shaders");
+  REQUIRE(std::holds_alternative<std::string>(arguments[2]));
+  REQUIRE(std::get<std::string>(arguments[2]) == "project/shaders");
 
   arguments.clear();
 
   REQUIRE(cmd.get_option_arguments("o", arguments));
   REQUIRE(arguments.size() == 1);
-  REQUIRE(arguments[0].get_type() == cppli::variant_type::boolean);
-  REQUIRE(arguments[0].get_bool() == true);
+  REQUIRE(std::holds_alternative<bool>(arguments[0]));
+  REQUIRE(std::get<bool>(arguments[0]) == true);
 }
 
 TEST_CASE("raw runtime console command with parameters but no options.")
@@ -263,8 +263,8 @@ TEST_CASE("raw runtime console command with parameters but no options.")
   std::vector<cppli::variant_literal> arguments;
   cmd.get_command_line_arguments(arguments);
   REQUIRE(arguments.size() == 1);
-  REQUIRE(arguments[0].get_type() == cppli::variant_type::boolean);
-  REQUIRE(arguments[0].get_bool() == true);
+  REQUIRE(std::holds_alternative<bool>(arguments[0]));
+  REQUIRE(std::get<bool>(arguments[0]) == true);
 }
 
 TEST_CASE("raw command line or consoel command with logging enabled.")

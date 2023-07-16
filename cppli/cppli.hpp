@@ -7,8 +7,8 @@
 
 #include <cppli/internal/module.hpp>
 #include <cppli/internal/nodes.hpp>
+#include <cppli/internal/variant.hpp>
 #include <vector>
-#include <variant>
 #include <functional>
 #include <string>
 #include <typeinfo>
@@ -21,7 +21,6 @@ namespace tokenize
 
 namespace cppli
 {
-  class variant_literal;
   typedef void (*logger_callback_fn)(const char* logging_message);
 
 namespace internal
@@ -64,6 +63,8 @@ namespace internal
     struct function_wrapper_base
     {
       virtual ~function_wrapper_base() = default;
+
+      virtual bool execute(const std::vector<variant_literal>& arguments) = 0;
     };
 
     template <typename fn>
@@ -130,15 +131,8 @@ namespace internal
   class CPPLI_API command_line
   {
     command_line_config m_config;
-    std::string m_command;
-    internal::command_node* m_root;
-
-    bool parse_path(std::string& out_path);
-    internal::command_node* parse_command();
-    internal::ast_node* parse_expression();
-    internal::option_node* parse_option();
-    internal::parameter_node* parse_parameter();
-    std::vector<internal::function_wrapper_base> m_option_callbacks;
+    raw_command_line m_internal_command_line;
+    std::unordered_map<std::string, std::shared_ptr<internal::function_wrapper_base>> m_options;
 
     public:
 
@@ -147,7 +141,7 @@ namespace internal
     bool execute(std::string& command);
 
     template<typename fn>
-    void add_option(const std::string& short_hand, const std::string& command_name, const std::string& description, fn callback)
+    void add_option(const std::string& short_hand, const std::string& command_name, const std::string& description, bool required, fn callback)
     {
       using traits = internal::function_traits<fn>;
       static_assert(traits::arity == 1, "Command line callbacks can only support either a single argument or a vector of a supported argument type.");
@@ -174,6 +168,7 @@ namespace internal
         is_vector_float  ||
         is_vector_string 
       , "The argument for the callback can only be a bool, int, float, string, or a vector of any of the previously mentioned types.");
+
 
     }
   };

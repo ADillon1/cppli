@@ -33,7 +33,7 @@ namespace internal
 
   struct parameter_node : ast_node
   {
-    variant_type m_type;
+    variant_literal m_varient;
     virtual void walk(visitor* visitor, bool visit = true) override;
   };
 }
