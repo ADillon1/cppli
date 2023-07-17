@@ -21,25 +21,88 @@ void logger_callback_test(const char* logging_message)
   }
 }
 
-
-TEST_CASE("single parameter option test.")
+TEST_CASE("Command Line single parameter bool test.")
 {
-  std::string command = "test.exe --option 1";
+  std::string command = "test.exe --option true";
   cppli::command_line_config config;
   cppli::command_line cli(config);
-  //cli.add_option("o", "option", "this is my first option. Isn't it neat?", test_fn);
+  bool value = false;
   cli.add_option(
     "o", 
     "option", 
     "this is my first option. Isn't it neat?", 
     false,
-  [](int value) 
+  [&value](bool arg) 
   {
-    printf("test! %d", value);
+    value = arg;
     return true;
   });
 
   REQUIRE(cli.execute(command));
+  REQUIRE(value == true);
+}
+
+TEST_CASE("Command Line single parameter int test.")
+{
+  std::string command = "test.exe --option 1";
+  cppli::command_line_config config;
+  cppli::command_line cli(config);
+  int value = 0;
+  cli.add_option(
+    "o", 
+    "option", 
+    "this is my first option. Isn't it neat?", 
+    false,
+  [&value](int arg) 
+  {
+    value = arg;
+    return true;
+  });
+
+  REQUIRE(cli.execute(command));
+  REQUIRE(value == 1);
+}
+
+TEST_CASE("Command Line single parameter float test.")
+{
+  std::string command = "test.exe --option 1.0";
+  cppli::command_line_config config;
+  cppli::command_line cli(config);
+  float value = 0;
+  cli.add_option(
+    "o", 
+    "option", 
+    "this is my first option. Isn't it neat?", 
+    false,
+  [&value](float arg) 
+  {
+    value = arg;
+    return true;
+  });
+
+  REQUIRE(cli.execute(command));
+  REQUIRE(value == 1.0f);
+}
+
+TEST_CASE("Command Line single parameter string test.")
+{
+  std::string command = "test.exe --option project/assets";
+  cppli::command_line_config config;
+  cppli::command_line cli(config);
+  std::string value;
+  cli.add_option(
+    "o", 
+    "option", 
+    "this is my first option. Isn't it neat?", 
+    false,
+  [&value](std::string arg) 
+  {
+    value = arg;
+    return true;
+  });
+
+  REQUIRE(cli.execute(command));
+  REQUIRE(value == "project/assets");
 }
 
 TEST_CASE("raw command line empty")
