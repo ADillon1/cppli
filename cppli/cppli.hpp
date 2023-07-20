@@ -23,7 +23,7 @@ namespace cppli
 {
   typedef void (*logger_callback_fn)(const char* logging_message);
 
-    struct command_line_config
+  struct command_line_config
   {
     std::string m_application_name;
     std::string m_application_description;
@@ -33,12 +33,26 @@ namespace cppli
     logger_callback_fn m_logging_callback;
   };
 
+  struct option_config
+  {
+    std::string m_shorthand;
+    std::string m_name;
+    std::string m_description;
+    bool m_is_required;
+  };
+
 namespace internal
 {
   struct ast_node;
   struct command_node;
   struct option_node;
   struct parameter_node;
+
+  template <typename T>
+  struct is_vector : std::false_type {};
+
+  template <typename T, typename Alloc>
+  struct is_vector<std::vector<T, Alloc>> : std::true_type {};
 
   template<typename> struct function_traits;
 
@@ -77,16 +91,11 @@ namespace internal
       std::string m_description;
       bool m_is_required;
 
-      function_wrapper_base(
-        std::string shorthand,
-        std::string name,
-        std::string description,
-        bool is_required
-        )
-          : m_shorthand(shorthand)
-          , m_name(name)
-          , m_description(description)
-          , m_is_required(is_required)
+      function_wrapper_base(const option_config& config)
+          : m_shorthand(config.m_shorthand)
+          , m_name(config.m_name)
+          , m_description(config.m_description)
+          , m_is_required(config.m_is_required)
         {
         }
 
@@ -98,16 +107,12 @@ namespace internal
     template <typename param_type>
     struct function_wrapper_single_param : public function_wrapper_base
     {
-
       std::function<bool(param_type)> m_function;
 
       function_wrapper_single_param(
-        const std::string& shorthand,
-        const std::string& name,
-        const std::string& description,
-        bool is_required,
+        const option_config& config,
         std::function<bool(param_type)>&& f) 
-        : function_wrapper_base(shorthand, name, description, is_required)
+        : function_wrapper_base(config)
         , m_function(f) 
         {
         }
@@ -128,6 +133,38 @@ namespace internal
 
         return m_function(std::get<param_type>(arguments[0]));
       }
+    };
+
+    template <typename param_type>
+    struct function_wrapper_vector_param : public function_wrapper_base
+    {
+      std::function<bool(const std::vector<param_type>&)> m_function;
+
+      function_wrapper_vector_param(
+        const option_config& config,
+        std::function<bool(const std::vector<param_type>&)>&& f) 
+          : function_wrapper_base(config)
+          , m_function(f) 
+        {
+        }
+
+        virtual bool execute(const command_line_config& config, const std::vector<variant_literal>& arguments)
+        {
+          std::vector<param_type> values;
+
+          for (size_t i = 0; i < arguments.size(); ++i)
+          {
+            if (!std::holds_alternative<param_type>(arguments[i]))
+            {
+              // Param does not match type.
+              return false;
+            }
+
+            values.push_back(std::get<param_type>(arguments[i]));
+          }
+
+          return m_function(values);
+        }
     };
   }
 
@@ -179,6 +216,18 @@ namespace internal
 
     bool internal_execute();
 
+    template <typename option_type>
+    std::shared_ptr<internal::function_wrapper_base> make_shared_function_wrapper(const option_config& config, std::function<bool(option_type)>&& callback)
+    {
+      return std::make_shared<internal::function_wrapper_single_param<option_type>>(config, std::move(callback));
+    }
+
+    template <typename option_type>
+    std::shared_ptr<internal::function_wrapper_base> make_shared_function_wrapper(const option_config& config, std::function<bool(const std::vector<option_type>&)>&& callback)
+    {
+      return std::make_shared<internal::function_wrapper_vector_param<option_type>>(config, std::move(callback));
+    }
+
     public:
 
     command_line(const command_line_config& config);
@@ -193,35 +242,38 @@ namespace internal
       static_assert(std::is_same_v<typename traits::result_type, bool>, "failed...");
 
       using option_type = typename traits::template argument<0>;
-      constexpr bool is_bool = std::is_same_v<option_type, bool>;
-      constexpr bool is_int = std::is_same_v<option_type, int>;
-      constexpr bool is_float = std::is_same_v<option_type, float>;
-      constexpr bool is_string = std::is_same_v<option_type, std::string>;
-      constexpr bool is_vector_bool = std::is_same_v<option_type, std::vector<bool>>;
-      constexpr bool is_vector_int =  std::is_same_v<option_type, std::vector<int>>;
-      constexpr bool is_vector_float = std::is_same_v<option_type, std::vector<float>>;
-      constexpr bool is_vector_string = std::is_same_v<option_type, std::vector<std::string>>;
-      constexpr bool is_vector = is_vector_bool || is_vector_int || is_vector_float || is_vector_string;
+      using raw_option_type = typename std::remove_const_t<typename std::remove_reference_t<option_type>>;
 
-      static_assert(
-        is_bool          ||
-        is_int           ||
-        is_float         ||
-        is_string        ||
-        is_vector_bool   ||
-        is_vector_int    ||
-        is_vector_float  ||
-        is_vector_string 
-      , "The argument for the callback can only be a bool, int, float, string, or a vector of any of the previously mentioned types.");
+      option_config config;
+      config.m_shorthand = short_hand;
+      config.m_name = name;
+      config.m_description = description;
+      config.m_is_required = required;
 
-      if constexpr (traits::arity == 1)
+      if constexpr (internal::is_vector<raw_option_type>::value)
       {
-        m_options.push_back(std::make_shared<internal::function_wrapper_single_param<option_type>>(
-              short_hand, 
-              name, 
-              description, 
-              required, 
-              std::move(callback)));
+        using vector_value = raw_option_type::value_type;
+        static_assert(
+          std::is_same_v<vector_value, bool> ||
+          std::is_same_v<vector_value, int> ||
+          std::is_same_v<vector_value, float> ||
+          std::is_same_v<vector_value, std::string>,
+          "The vector value type for the callback can only be of type int, float, bool, or std::string."
+          );
+
+        m_options.push_back(make_shared_function_wrapper<raw_option_type::value_type>(config, std::move(callback)));
+      }
+      else
+      {
+        static_assert(
+          std::is_same_v<raw_option_type, bool> ||
+          std::is_same_v<raw_option_type, int> ||
+          std::is_same_v<raw_option_type, float> ||
+          std::is_same_v<raw_option_type, std::string>,
+          "The value type for the callback can only be of type int, float, bool, or std::string."
+          );
+
+        m_options.push_back(make_shared_function_wrapper<option_type>(config, std::move(callback)));
       }
     }
   };

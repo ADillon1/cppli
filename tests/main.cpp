@@ -70,6 +70,17 @@ TEST_CASE("Command Line single parameter float test.")
   cppli::command_line cli(config);
   float value = 0;
   cli.add_option(
+    "o",
+    "option",
+    "this is my first option. Isn't it neat?",
+    false,
+  [&value](float arg) 
+  {
+    value = arg;
+    return true;
+  });
+
+  cli.add_option(
     "o", 
     "option", 
     "this is my first option. Isn't it neat?", 
@@ -103,6 +114,148 @@ TEST_CASE("Command Line single parameter string test.")
 
   REQUIRE(cli.execute(command));
   REQUIRE(value == "project/assets");
+}
+
+TEST_CASE("Command line vector with no parameters.")
+{
+  std::string command = "text.exe --option";
+  cppli::command_line_config config;
+  cppli::command_line cli(config);
+  std::vector<bool> values;
+
+  cli.add_option(
+    "o",
+    "option",
+    "this is my first option. Isn't it neat?",
+    false,
+    [&values](const std::vector<bool>& args)
+    {
+      values = args;
+      return true;
+    }
+  );
+
+  REQUIRE(cli.execute(command));
+  REQUIRE(values.size() == 0);
+}
+
+TEST_CASE("Command line vector of bool parameters.")
+{
+  std::string command = "test.exe --option true false true";
+  cppli::command_line_config config;
+  cppli::command_line cli(config);
+  std::vector<bool> values;
+  cli.add_option(
+    "o",
+    "option",
+    "this is my first option. Isn't it neat?",
+    false,
+    [&values](const std::vector<bool>& args)
+    {
+      values = args;
+      return true;
+    }
+  );
+
+  REQUIRE(cli.execute(command));
+  REQUIRE(values.size() == 3);
+  REQUIRE(values[0] == true);
+  REQUIRE(values[1] == false);
+  REQUIRE(values[2] == true);
+}
+
+TEST_CASE("Command line vector of int parameters.")
+{
+  std::string command = "test.exe --option 10 15 20";
+  cppli::command_line_config config;
+  cppli::command_line cli(config);
+  std::vector<int> values;
+  cli.add_option(
+    "o",
+    "option",
+    "this is my first option. Isn't it neat?",
+    false,
+    [&values](const std::vector<int>& args)
+    {
+      values = args;
+      return true;
+    }
+  );
+
+  REQUIRE(cli.execute(command));
+  REQUIRE(values.size() == 3);
+  REQUIRE(values[0] == 10);
+  REQUIRE(values[1] == 15);
+  REQUIRE(values[2] == 20);
+}
+
+TEST_CASE("Command line vector of float parameters.")
+{
+  std::string command = "test.exe --option 10.0 15.0 20.0";
+  cppli::command_line_config config;
+  cppli::command_line cli(config);
+  std::vector<float> values;
+  cli.add_option(
+    "o",
+    "option",
+    "this is my first option. Isn't it neat?",
+    false,
+    [&values](const std::vector<float>& args)
+    {
+      values = args;
+      return true;
+    }
+  );
+
+  REQUIRE(cli.execute(command));
+  REQUIRE(values.size() == 3);
+  REQUIRE(values[0] == 10.0);
+  REQUIRE(values[1] == 15.0);
+  REQUIRE(values[2] == 20.0);
+}
+
+TEST_CASE("Command line vector of string parameters.")
+{
+  std::string command = "test.exe --option project/assets project/source project/plugins";
+  cppli::command_line_config config;
+  cppli::command_line cli(config);
+  std::vector<std::string> values;
+  cli.add_option(
+    "o",
+    "option",
+    "this is my first option. Isn't it neat?",
+    false,
+    [&values](const std::vector<std::string>& args)
+    {
+      values = args;
+      return true;
+    }
+  );
+
+  REQUIRE(cli.execute(command));
+  REQUIRE(values.size() == 3);
+  REQUIRE(values[0] == "project/assets");
+  REQUIRE(values[1] == "project/source");
+  REQUIRE(values[2] == "project/plugins");
+}
+
+TEST_CASE("Command line type mismatch for vector of parameters.")
+{
+  std::string command = "test.exe --option 10 15.0 false";
+  cppli::command_line_config config;
+  cppli::command_line cli(config);
+  cli.add_option(
+    "o",
+    "option",
+    "this is my first option. Isn't it neat?",
+    false,
+    [](const std::vector<int>& args)
+    {
+      return true;
+    }
+  );
+
+  REQUIRE(!cli.execute(command));
 }
 
 TEST_CASE("raw command line empty")
