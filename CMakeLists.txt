@@ -48,8 +48,7 @@ add_library(cppli SHARED ${SOURCES})
 target_link_libraries(cppli tokenize)
 target_compile_definitions(cppli PRIVATE CPPLI_EXPORT)
 
-
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(cppli PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 if (BUILD_CPPLI_TESTS)
     message("Building tests")
