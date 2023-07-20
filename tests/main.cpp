@@ -21,6 +21,17 @@ void logger_callback_test(const char* logging_message)
   }
 }
 
+TEST_CASE("Command line config default values.")
+{
+  cppli::command_line_config config;
+  REQUIRE(config.m_application_name.empty());
+  REQUIRE(config.m_application_description.empty());
+  REQUIRE(config.m_logging_callback == nullptr);
+  REQUIRE(config.m_major_version == -1);
+  REQUIRE(config.m_minor_version == -1);
+  REQUIRE(config.m_patch_version == -1);
+}
+
 TEST_CASE("Command Line single parameter bool test.")
 {
   std::string command = "test.exe --option true";

@@ -27,10 +27,10 @@ namespace cppli
   {
     std::string m_application_name;
     std::string m_application_description;
-    int m_major_version;
-    int m_minor_version;
-    int m_patch_version;
-    logger_callback_fn m_logging_callback;
+    int m_major_version = -1;
+    int m_minor_version = -1;
+    int m_patch_version = -1;
+    logger_callback_fn m_logging_callback = nullptr;
   };
 
   struct option_config
