@@ -3,7 +3,7 @@
 #include <cppli/internal/variant.hpp>
 #include <tokenize/tokenize.hpp>
 #include <cppli/internal/visitor.hpp>
-#include <exception>
+#include <stdexcept>
 
 namespace cppli
 {
@@ -137,7 +137,7 @@ namespace internal
           int new_token_index = context.m_current_token;
           if (new_token_index == current_token_index)
           {
-            throw std::exception("failed to parse command!");
+            throw std::runtime_error("failed to parse command!");
           }
         }
 

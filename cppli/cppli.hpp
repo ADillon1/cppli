@@ -252,7 +252,7 @@ namespace internal
 
       if constexpr (internal::is_vector<raw_option_type>::value)
       {
-        using vector_value = raw_option_type::value_type;
+        using vector_value = typename raw_option_type::value_type;
         static_assert(
           std::is_same_v<vector_value, bool> ||
           std::is_same_v<vector_value, int> ||
@@ -261,7 +261,7 @@ namespace internal
           "The vector value type for the callback can only be of type int, float, bool, or std::string."
           );
 
-        m_options.push_back(make_shared_function_wrapper<raw_option_type::value_type>(config, std::move(callback)));
+        m_options.push_back(make_shared_function_wrapper<typename raw_option_type::value_type>(config, std::move(callback)));
       }
       else
       {
