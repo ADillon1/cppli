@@ -160,12 +160,12 @@ namespace internal
   {
     std::unique_ptr<internal::ast_node> expression;
 
-    if (expression = parse_option(context))
+    if ((expression = parse_option(context)))
     {
       return std::move(expression);
     }
 
-    if (expression = parse_parameter(context))
+    if ((expression = parse_parameter(context)))
     {
       return std::move(expression);
     }
@@ -378,7 +378,7 @@ namespace internal
     m_root_command = parse_command();
   }
 
-  raw_command_line::raw_command_line(const nullptr_t& null)
+  raw_command_line::raw_command_line(const std::nullptr_t& null)
     : m_command_string()
     , m_root_command()
   {

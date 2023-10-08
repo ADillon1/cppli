@@ -187,7 +187,7 @@ namespace internal
 
     raw_command_line(const std::string& command, logger_callback_fn logging_callback = nullptr);
 
-    raw_command_line(const nullptr_t& null);
+    raw_command_line(const std::nullptr_t& null);
 
     raw_command_line(raw_command_line&& rhs);
 
