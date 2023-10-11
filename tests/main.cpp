@@ -530,3 +530,29 @@ TEST_CASE("Handler for directory strings with - characters.")
   REQUIRE(std::holds_alternative<std::string>(cmd2_args[0]));
   REQUIRE(std::get<std::string>(cmd2_args[0]) == "C:/relative-path/foo");
 }
+
+TEST_CASE("moe complex paths with dashes, numbers, and ~'s")
+{
+  std::string command_1 = "C:/projects/my-projects/testing/build/GCC-12.3.0-x64-Debug-Server/bin/entry -d=\"~/projects/projects/test/plugins\" -p=common  -t=common ";
+
+  std::vector<cppli::variant_literal> arguments;
+
+  cppli::raw_command_line cmd(command_1);
+  REQUIRE(cmd.get_command() == "C:/projects/my-projects/testing/build/GCC-12.3.0-x64-Debug-Server/bin/entry");
+
+  REQUIRE(cmd.get_option_arguments("d", arguments));
+  REQUIRE(arguments.size() == 1);
+  REQUIRE(std::holds_alternative<std::string>(arguments[0]));
+  REQUIRE(std::get<std::string>(arguments[0]) == "~/projects/projects/test/plugins");
+
+  REQUIRE(cmd.get_option_arguments("p", arguments));
+  REQUIRE(arguments.size() == 1);
+  REQUIRE(std::holds_alternative<std::string>(arguments[0]));
+  REQUIRE(std::get<std::string>(arguments[0]) == "common");
+
+  REQUIRE(cmd.get_option_arguments("t", arguments));
+  REQUIRE(arguments.size() == 1);
+  REQUIRE(std::holds_alternative<std::string>(arguments[0]));
+  REQUIRE(std::get<std::string>(arguments[0]) == "common");
+
+}

@@ -69,7 +69,10 @@ namespace internal
     int begin = context.m_current_token;
     out_path.clear();
 
-    if (context.accept(tokenize::token_id::subtraction))
+    if (context.accept(tokenize::token_id::subtraction) || 
+        context.accept(tokenize::token_id::integer_literal, false) || 
+        context.accept(tokenize::token_id::float_literal, false)
+      )
     {
       // if we started this with subtraction, then its probably an option.
       context.set_current_token_index(begin);
@@ -85,13 +88,15 @@ namespace internal
     while (!context.end_of_token_stream())
     {
       if (
-        context.accept(tokenize::token_id::identifier, false)     || // abcdefghijklmnop12345567890_
-        context.accept(tokenize::token_id::forward_slash, false)  || /* \ */ 
-        context.accept(tokenize::token_id::division, false)       || // /
-        context.accept(tokenize::token_id::colon, false)          || // :
-        context.accept(tokenize::token_id::member_access, false)  || // .
-        context.accept(tokenize::token_id::bitwise_not, false)    || // ~
-        context.accept(tokenize::token_id::subtraction, false)       // -
+        context.accept(tokenize::token_id::identifier, false)       || // abcdefghijklmnop12345567890_
+        context.accept(tokenize::token_id::integer_literal, false)  || // integer
+        context.accept(tokenize::token_id::float_literal, false)    || // float
+        context.accept(tokenize::token_id::forward_slash, false)    || /* \ */ 
+        context.accept(tokenize::token_id::division, false)         || // /
+        context.accept(tokenize::token_id::colon, false)            || // :
+        context.accept(tokenize::token_id::member_access, false)    || // .
+        context.accept(tokenize::token_id::bitwise_not, false)      || // ~
+        context.accept(tokenize::token_id::subtraction, false)         // -
         )
       {
         out_path += std::string(context.get_previous_token().m_stream, context.get_previous_token().m_length);
@@ -104,9 +109,12 @@ namespace internal
 
     if (out_path.size() != 0)
     {
-      if (!context.end_of_token_stream())
+      while (!context.end_of_token_stream())
       {
-        while (context.accept(tokenize::token_id::whitespace));
+        if (!context.accept(tokenize::token_id::whitespace))
+        {
+          break;
+        }
       }
 
       return true;
