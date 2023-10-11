@@ -69,6 +69,13 @@ namespace internal
     int begin = context.m_current_token;
     out_path.clear();
 
+    if (context.accept(tokenize::token_id::subtraction))
+    {
+      // if we started this with subtraction, then its probably an option.
+      context.set_current_token_index(begin);
+      return false;
+    };
+
     if (context.accept(tokenize::token_id::string_literal))
     {
       out_path.assign(context.get_previous_token().m_stream + 1, context.get_previous_token().m_length - 2);
@@ -78,11 +85,14 @@ namespace internal
     while (!context.end_of_token_stream())
     {
       if (
-        context.accept(tokenize::token_id::identifier, false)     ||
-        context.accept(tokenize::token_id::forward_slash, false)  ||
-        context.accept(tokenize::token_id::division, false)       ||
-        context.accept(tokenize::token_id::colon, false)          ||
-        context.accept(tokenize::token_id::member_access, false))
+        context.accept(tokenize::token_id::identifier, false)     || // abcdefghijklmnop12345567890_
+        context.accept(tokenize::token_id::forward_slash, false)  || /* \ */ 
+        context.accept(tokenize::token_id::division, false)       || // /
+        context.accept(tokenize::token_id::colon, false)          || // :
+        context.accept(tokenize::token_id::member_access, false)  || // .
+        context.accept(tokenize::token_id::bitwise_not, false)    || // ~
+        context.accept(tokenize::token_id::subtraction, false)       // -
+        )
       {
         out_path += std::string(context.get_previous_token().m_stream, context.get_previous_token().m_length);
       }
@@ -96,7 +106,7 @@ namespace internal
     {
       if (!context.end_of_token_stream())
       {
-        context.accept(tokenize::token_id::whitespace);
+        while (context.accept(tokenize::token_id::whitespace));
       }
 
       return true;
@@ -117,9 +127,9 @@ namespace internal
       if (parse_path(context, command_string))
       {
         // Remove whitespace.
-        context.remove_tokens(tokenize::token_id::new_line);
-        context.remove_tokens(tokenize::token_id::single_line_comment);
-        context.remove_tokens(tokenize::token_id::multi_line_comment);
+        //context.remove_tokens(tokenize::token_id::new_line);
+        //context.remove_tokens(tokenize::token_id::single_line_comment);
+        //context.remove_tokens(tokenize::token_id::multi_line_comment);
 
         std::unique_ptr<internal::command_node> command_node = std::make_unique<internal::command_node>();
         command_node->m_name = command_string;

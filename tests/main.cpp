@@ -498,7 +498,7 @@ TEST_CASE("raw runtime console command with parameters but no options.")
   REQUIRE(std::get<bool>(arguments[0]) == true);
 }
 
-TEST_CASE("raw command line or consoel command with logging enabled.")
+TEST_CASE("raw command line or console command with logging enabled.")
 {
   // we expect this to exhibit a parsing error because the option name is missing.
   // It should emmit an error and fail, calling our custom logger callback.
@@ -506,4 +506,27 @@ TEST_CASE("raw command line or consoel command with logging enabled.")
   cppli::raw_command_line cmd(command, logger_callback_test);
   REQUIRE(cmd.is_empty());
   REQUIRE(logger_count == 1);
+}
+
+TEST_CASE("Handler for directory strings with - characters.")
+{
+  std::string command1 = "test.exe -d=C:/relative-path/foo";
+  std::string command2 = "test.exe -d=\"C:/relative-path/foo\"";
+
+  cppli::raw_command_line cmd1(command1);
+  cppli::raw_command_line cmd2(command2);
+
+  std::vector<cppli::variant_literal> cmd1_args;
+  std::vector<cppli::variant_literal> cmd2_args;
+
+  REQUIRE(cmd1.get_option_arguments("d", cmd1_args));
+  REQUIRE(cmd1_args.size() == 1);
+  REQUIRE(std::holds_alternative<std::string>(cmd1_args[0]));
+  REQUIRE(std::get<std::string>(cmd1_args[0]) == "C:/relative-path/foo");
+
+
+  REQUIRE(cmd2.get_option_arguments("d", cmd2_args));
+  REQUIRE(cmd2_args.size() == 1);
+  REQUIRE(std::holds_alternative<std::string>(cmd2_args[0]));
+  REQUIRE(std::get<std::string>(cmd2_args[0]) == "C:/relative-path/foo");
 }
